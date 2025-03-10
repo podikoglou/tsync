@@ -37,13 +37,20 @@ pub fn handle_client(stream: TcpStream) -> anyhow::Result<()> {
     let mut reader = BufReader::new(stream);
 
     loop {
-        let metadata = read_file_metadata(&mut reader)?;
+        let metadata = match read_file_metadata(&mut reader) {
+            Ok(val) => val,
+            Err(_) => {
+                eprintln!("client likely disconnected");
+                break;
+            }
+        };
 
         for _ in 0..metadata.pieces_amount {
             let piece = read_piece(&mut reader)?;
-            dbg!(piece.id, piece.data.len());
         }
     }
+
+    Ok(())
 }
 
 fn copy_file(cmd: CpCommand) -> anyhow::Result<()> {
