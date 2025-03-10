@@ -112,7 +112,7 @@ pub fn read_piece<R: BufRead>(reader: &mut R) -> anyhow::Result<Piece> {
     };
 
     // read data
-    let mut data_buf = Vec::with_capacity(size);
+    let mut data_buf = vec![0; size];
 
     reader.read_exact(&mut data_buf)?;
 
