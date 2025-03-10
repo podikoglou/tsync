@@ -86,6 +86,9 @@ pub fn write_piece<W: Write>(writer: &mut W, piece: &Piece) -> anyhow::Result<()
     write_struct!(writer, id_header);
     write_struct!(writer, size_header);
 
+    writer.write(&piece.data)?;
+    writer.flush()?;
+
     Ok(())
 }
 
