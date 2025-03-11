@@ -46,8 +46,21 @@ pub fn handle_client(stream: TcpStream) -> anyhow::Result<()> {
             }
         };
 
+        let mut file = File::create_new(metadata.name)?;
+
         for _ in 0..metadata.pieces_amount {
             let piece = read_piece(&mut reader)?;
+
+            println!("Piece {}/{} received", piece.id, metadata.pieces_amount);
+
+            let wrote = file.write(&piece.data)?;
+
+            if wrote != piece.size {
+                eprintln!(
+                    "didn't write enough data (or wrote more) (expected {}, wrote {})",
+                    piece.size, wrote
+                );
+            }
         }
     }
 
