@@ -3,7 +3,7 @@ use proto::{
     read_file_metadata, read_piece, write_file_metadata, write_piece, FileMetadata, Piece,
 };
 use std::cmp::min;
-use std::io::{Read, Seek};
+use std::io::{Read, Seek, Write};
 use std::net::SocketAddr;
 use std::{
     fs::File,
@@ -11,6 +11,7 @@ use std::{
     net::{TcpListener, TcpStream},
     os::unix::fs::MetadataExt,
 };
+use xxhash_rust::xxh3::xxh3_64;
 
 pub mod args;
 pub mod header;
@@ -89,10 +90,13 @@ fn copy_file(cmd: CpCommand) -> anyhow::Result<()> {
         reader.seek(std::io::SeekFrom::Start(*offset))?;
         reader.read(&mut buf)?;
 
+        // compute checksum
+        let checksum = xxh3_64(&buf);
         let piece = Piece {
             id: idx,
             size: buf.len(),
             data: buf.to_vec(),
+            checksum,
         };
 
         write_piece(&mut stream, &piece)?;

@@ -1,8 +1,9 @@
 use crate::header::Header;
-use anyhow::bail;
+use anyhow::{bail, ensure};
 use byteorder::ByteOrder;
 use postcard::{from_bytes, to_allocvec};
 use std::io::{BufRead, Write};
+use xxhash_rust::xxh3::xxh3_64;
 
 #[derive(Debug)]
 pub struct FileMetadata {
@@ -15,7 +16,7 @@ pub struct Piece {
     pub id: usize,
     pub size: usize,
     pub data: Vec<u8>,
-    // TODO: checksum!
+    pub checksum: u64,
 }
 
 macro_rules! write_struct {
@@ -82,8 +83,10 @@ pub fn read_file_metadata<R: BufRead>(reader: &mut R) -> anyhow::Result<FileMeta
 pub fn write_piece<W: Write>(writer: &mut W, piece: &Piece) -> anyhow::Result<()> {
     let id_header = Header::Id(piece.id);
     let size_header = Header::Size(piece.size);
+    let checksum_header = Header::Checksum(piece.checksum);
 
     write_struct!(writer, id_header);
+    write_struct!(writer, checksum_header);
     write_struct!(writer, size_header);
 
     writer.write(&piece.data)?;
@@ -103,6 +106,14 @@ pub fn read_piece<R: BufRead>(reader: &mut R) -> anyhow::Result<Piece> {
         other => bail!("header must be id header, not {:?}", other),
     };
 
+    // read checksum header
+    let checksum_header = read_struct!(reader, buf, crate::proto::Header);
+
+    let expected_checksum = match checksum_header {
+        Header::Checksum(val) => val,
+        other => bail!("header must be checksum header, not {:?}", other),
+    };
+
     // read size header
     let size_header = read_struct!(reader, buf, crate::proto::Header);
 
@@ -116,9 +127,15 @@ pub fn read_piece<R: BufRead>(reader: &mut R) -> anyhow::Result<Piece> {
 
     reader.read_exact(&mut data_buf)?;
 
+    // compute checksum of received data, compare with checksum header
+    let checksum = xxh3_64(&data_buf);
+
+    ensure!(checksum == expected_checksum, "checksums don't match");
+
     Ok(Piece {
         id,
         size,
         data: data_buf,
+        checksum,
     })
 }

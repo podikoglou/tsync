@@ -6,4 +6,5 @@ pub enum Header {
     Size(usize),
     Pieces(usize),
     Name(String),
+    Checksum(u64),
 }
