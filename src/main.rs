@@ -117,9 +117,8 @@ fn copy_file(cmd: CpCommand) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_server(_cmd: ServerCommand) -> anyhow::Result<()> {
-    // use constant
-    let listener = TcpListener::bind("127.0.0.1:8686")?;
+fn run_server(cmd: ServerCommand) -> anyhow::Result<()> {
+    let listener = TcpListener::bind(SocketAddr::new(cmd.address.parse()?, cmd.port))?;
 
     for stream in listener.incoming() {
         handle_client(stream?)?;

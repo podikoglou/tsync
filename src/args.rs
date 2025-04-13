@@ -20,6 +20,9 @@ pub enum Command {
 #[derive(FromArgs, Debug)]
 #[argh(subcommand, name = "server")]
 pub struct ServerCommand {
+    /// address to listen on
+    #[argh(option, default = "String::from(\"127.0.0.1\")")]
+    pub address: String,
     /// port to listen on
     #[argh(option, default = "8086")]
     pub port: u16,
