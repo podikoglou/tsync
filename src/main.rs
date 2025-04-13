@@ -70,12 +70,15 @@ fn copy_file(cmd: CpCommand) -> anyhow::Result<()> {
     println!(
         "Copying file from {} to {}:{}",
         cmd.source.display(),
-        cmd.destination.ip,
+        cmd.destination.address,
         cmd.destination.path.display()
     );
 
     // open connection
-    let mut stream = TcpStream::connect(SocketAddr::new(cmd.destination.ip, cmd.destination.port))?;
+    let mut stream = TcpStream::connect(SocketAddr::new(
+        cmd.destination.address,
+        cmd.destination.port,
+    ))?;
 
     // split into pieces
     let metadata = std::fs::metadata(&cmd.source)?;

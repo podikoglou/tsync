@@ -23,6 +23,7 @@ pub struct ServerCommand {
     /// address to listen on
     #[argh(option, default = "String::from(\"127.0.0.1\")")]
     pub address: String,
+
     /// port to listen on
     #[argh(option, default = "8086")]
     pub port: u16,
@@ -43,7 +44,7 @@ pub struct CpCommand {
 
 #[derive(Debug)]
 pub struct Destination {
-    pub ip: IpAddr,
+    pub address: IpAddr,
     pub port: u16,
     pub path: PathBuf,
 }
@@ -54,7 +55,7 @@ impl FromStr for Destination {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = s.split(':').collect();
 
-        let ip = parts[0]
+        let address = parts[0]
             .parse::<IpAddr>()
             .map_err(|e| format!("Invalid IP address: {}", e))?;
 
@@ -65,6 +66,10 @@ impl FromStr for Destination {
 
         let path = PathBuf::from(parts.last().unwrap_or(&""));
 
-        Ok(Destination { ip, port, path })
+        Ok(Destination {
+            address,
+            port,
+            path,
+        })
     }
 }
