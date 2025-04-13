@@ -17,8 +17,7 @@ pub mod args;
 pub mod header;
 pub mod proto;
 
-const PIECE_SIZE: u64 = 1024 * 1024; // TODO: convert to usize
-const PORT: u16 = 8686;
+const PIECE_SIZE: u64 = 1024 * 1024;
 
 pub fn calc_offsets(file_size: u64, piece_size: u64) -> Vec<u64> {
     let mut curr_offset: u64 = 0;
@@ -76,7 +75,7 @@ fn copy_file(cmd: CpCommand) -> anyhow::Result<()> {
     );
 
     // open connection
-    let mut stream = TcpStream::connect(SocketAddr::new(cmd.destination.ip, PORT))?;
+    let mut stream = TcpStream::connect(SocketAddr::new(cmd.destination.ip, cmd.destination.port))?;
 
     // split into pieces
     let metadata = std::fs::metadata(&cmd.source)?;

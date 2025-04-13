@@ -21,7 +21,7 @@ pub enum Command {
 #[argh(subcommand, name = "server")]
 pub struct ServerCommand {
     /// port to listen on
-    #[argh(option, default = "8080")]
+    #[argh(option, default = "8086")]
     pub port: u16,
 }
 
@@ -33,7 +33,7 @@ pub struct CpCommand {
     #[argh(positional)]
     pub source: PathBuf,
 
-    /// destination in format "ip:path"
+    /// destination in format "ip:[port:]path". (default port: 8086)
     #[argh(positional)]
     pub destination: Destination,
 }
@@ -41,6 +41,7 @@ pub struct CpCommand {
 #[derive(Debug)]
 pub struct Destination {
     pub ip: IpAddr,
+    pub port: u16,
     pub path: PathBuf,
 }
 
@@ -48,16 +49,19 @@ impl FromStr for Destination {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let parts: Vec<&str> = s.splitn(2, ':').collect();
-        if parts.len() != 2 {
-            return Err("Destination must be in format 'ip:path'".to_string());
-        }
+        let parts: Vec<&str> = s.split(':').collect();
 
         let ip = parts[0]
             .parse::<IpAddr>()
             .map_err(|e| format!("Invalid IP address: {}", e))?;
-        let path = PathBuf::from(parts[1]);
 
-        Ok(Destination { ip, path })
+        let port = parts
+            .get(1)
+            .and_then(|s| s.parse::<u16>().ok())
+            .unwrap_or(8086);
+
+        let path = PathBuf::from(parts.last().unwrap_or(&""));
+
+        Ok(Destination { ip, port, path })
     }
 }
